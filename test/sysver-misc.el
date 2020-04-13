@@ -3,26 +3,24 @@
 (require 'ert)
 (require 'sysver-mode)
 
-(ert-deftest sysver-test-underscore-part-of-word ()
+(ert-deftest sysver-test-underscore-part-of-word-on ()
   "Test the behavior of the underscore based on a major-mode option.
 
 The test is performed by setting both possible options for `sysver-underscore-is-word-constituent'
 and forwarding one word on the test string. The reached point positions are then compared against
 the expected values."
 
-  (let* ((test-string "this_is_a_word")
-         (test-options-and-exp-results (list (cons t (1+ (length test-string)))
-                                             (cons nil 5))))
+  (let* ((test-string "is_this_a_word")
+         (options (list nil t))
+         (exp-results (list 3 (1+ (length test-string)))))
 
-    (while test-options-and-exp-results
+    (while options
       (with-temp-buffer
 
-        (setq option-expresult (pop test-options-and-exp-results))
-        (setq option (car option-expresult))
-        (setq expresult (cdr option-expresult))
-
         ;; setup
-        (setq-local sysver-underscore-is-word-constituent option)
+        (unload-feature 'sysver-mode t)
+        (load-file "../sysver-mode.el")
+        (setq sysver-underscore-is-word-constituent (pop options))
         (sysver-mode)
         (insert test-string)
         (goto-char (point-min))
@@ -31,5 +29,8 @@ the expected values."
         (forward-word)
 
         ;; verify
-        (should (equal (point) expresult))))))
+        (should (equal (point) (pop exp-results))))))
 
+
+  ;; ensure the other tests are not affected
+  (require 'sysver-mode))
