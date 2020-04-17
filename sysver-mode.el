@@ -74,8 +74,9 @@ This is useful to let the user customize it via the customization options"
     ;; operators symbols
     ;; (modify-syntax-entry ? "" table) TODO
     ;; word constituents
-    (when sysver-underscore-is-word-constituent
-      (modify-syntax-entry ?_ "w" table))
+    (if sysver-underscore-is-word-constituent
+        (modify-syntax-entry ?_ "w" table)
+      (modify-syntax-entry ?_ "_" table))
     (modify-syntax-entry ?` "w" table)
     ;; comments setup
     ;; (modify-syntax-entry ? "" table) TODO
@@ -92,11 +93,51 @@ This is useful to let the user customize it via the customization options"
        ;; end code-block
        "endmodule" "endprogram" "endinterface" "endchecker" "endpackage" "endprimitive" "endtask"
        "endfunction" "endconfig"))
+(setq sysver-keywords-aggregate-data-types
+      (list
+       "packed" "void" "struct" "union" "tagged" "typedef" "new" "with" "inside"))
+(setq sysver-keywords-classes
+      (list
+       "virtual" "extends" "implements" "pure" "extern" "static" "protected" "local"
+       "rand" "randc"))
+(setq sysver-keywords-struct-procedures-waits
+      (list
+       "always" "always_comb" "always_latch" "always_ff"
+       "initial" "final"
+       "wait" "wait_order" "disable"))
+(setq sysver-keywords-block-statements
+      (list
+       "begin" "end" "for" "fork" "join"))
+(setq sysver-keywords-assignments-statements
+      (list
+       "vectored" "scalared" "interconnect" "assign" ; continuous
+       "deassign" "force" "release"
+       "supply1" "strong1" "pull1" "weak1" "highz1"  ; strength
+       "supply0" "strong0" "pull0" "weak0" "highz0"
+       "default"                        ; patterns
+       "alias"                          ; aliasing
+       "null"
+       ))
 
 (setq sysver-keywords-operators
       (list
+       "=" "\\+=" "\\-=" "\\*=" "/=" "%=" "&=" "|=" "\\^=" "<<=" ">>=" "<<<=" ">>>=" ; assignment
+       ;; cond & unary & binary
+       "?" "\\+" "\\-" "\\!" "~" "&" "~&" "|" "~|" "\\^" "~\\^" "\\^~"
+       "*" "/" "%" "==" "\\!=" "===" "\\!==" "==?" "\\!=?" "&&" "||" "**"
+       "<" "<=" ">" ">=" ">>>" "<<<"
+       "->" "<->"
+       ">>" "<<"                        ; stream
+       "++" "--"                        ; inc & dec
        ))
-
+(setq sysver-keywords-procedural-programming-statements
+      (list
+       "unique" "unique0" "priority"    ; unique priority
+       "if" "else" "matches" "&&&"      ; if else
+       "case" "casez" "casex" "endcase" ; case
+       "forever" "repeat" "while" "for" "do" "foreach" ; loop
+       "return" "break" "continue"
+       ))
 (setq sysver-keywords-compiler-directives
       (mapcar (lambda (karg) (concat "`" karg))
               (list
