@@ -58,6 +58,16 @@ character as part of a word. In `nil' the `_' character is considered as punctua
   :type 'boolean
   :group 'sysver-misc)
 
+(defcustom sysver-emphasize-operators nil
+  "If `non-nil' highlight all operators for an improved visibility."
+  :type 'booleanxs
+  :group 'sysver-misc)
+
+(defcustom sysver-emphasize-block-statements nil
+  "if `non-nil' highlight the `begin'-`end' block delimiters for an improved visibility."
+  :type 'boolean
+  :group 'sysver-misc)
+
 ;; =================================================================================================
 ;; navigation functions
 ;; TODO
@@ -90,16 +100,16 @@ This is useful to let the user customize it via the customization options"
       (list
        ;; start code-block
        "module" "program" "interface" "checker" "package" "primitive" "task" "function" "config"
+       "fork"
        ;; end code-block
        "endmodule" "endprogram" "endinterface" "endchecker" "endpackage" "endprimitive" "endtask"
-       "endfunction" "endconfig"))
+       "endfunction" "endconfig" "join" "join_none" "join_any"))
 (setq sysver-keywords-aggregate-data-types
       (list
        "packed" "void" "struct" "union" "tagged" "typedef" "new" "with" "inside"))
 (setq sysver-keywords-classes
       (list
-       "virtual" "extends" "implements" "pure" "extern" "static" "protected" "local"
-       "rand" "randc"))
+       "virtual" "extends" "implements" "pure" "extern" "static" "protected" "local"))
 (setq sysver-keywords-struct-procedures-waits
       (list
        "always" "always_comb" "always_latch" "always_ff"
@@ -107,7 +117,7 @@ This is useful to let the user customize it via the customization options"
        "wait" "wait_order" "disable"))
 (setq sysver-keywords-block-statements
       (list
-       "begin" "end" "for" "fork" "join"))
+       "begin" "end"))
 (setq sysver-keywords-assignments-statements
       (list
        "vectored" "scalared" "interconnect" "assign" ; continuous
@@ -116,28 +126,74 @@ This is useful to let the user customize it via the customization options"
        "supply0" "strong0" "pull0" "weak0" "highz0"
        "default"                        ; patterns
        "alias"                          ; aliasing
-       "null"
-       ))
-
+       "null"))
 (setq sysver-keywords-operators
       (list
-       "=" "\\+=" "\\-=" "\\*=" "/=" "%=" "&=" "|=" "\\^=" "<<=" ">>=" "<<<=" ">>>=" ; assignment
+       "=" "+=" "-=" "*=" "/=" "%=" "&=" "|=" "^=" "<<=" ">>=" "<<<=" ">>>=" ; assignment
        ;; cond & unary & binary
-       "?" "\\+" "\\-" "\\!" "~" "&" "~&" "|" "~|" "\\^" "~\\^" "\\^~"
-       "*" "/" "%" "==" "\\!=" "===" "\\!==" "==?" "\\!=?" "&&" "||" "**"
+       "?" "+" "-" "!" "~" "&" "~&" "|" "~|" "^" "~^" "^~"
+       "*" "/" "%" "==" "!=" "===" "!==" "==?" "!=?" "&&" "||" "**"
        "<" "<=" ">" ">=" ">>>" "<<<"
-       "->" "<->"
+       "->" "<->" "##"
        ">>" "<<"                        ; stream
-       "++" "--"                        ; inc & dec
-       ))
+       "++" "--"))                      ; inc & dec
 (setq sysver-keywords-procedural-programming-statements
       (list
-       "unique" "unique0" "priority"    ; unique priority
-       "if" "else" "matches" "&&&"      ; if else
-       "case" "casez" "casex" "endcase" ; case
+       "unique" "unique0" "priority"                   ; unique priority
+       "if" "else" "iff" "matches" "&&&"               ; if else
+       "case" "casez" "casex" "endcase"                ; case
        "forever" "repeat" "while" "for" "do" "foreach" ; loop
-       "return" "break" "continue"
-       ))
+       "return" "break" "continue"))
+(setq sysver-keywords-clocking
+      (list
+       "clocking" "global clocking" "endclocking" ; clocking block
+       "edge" "posedge" "negedge"))
+(setq sysver-keywords-assertions
+      (list
+       "assert" "assume" "cover" "restrict" "except"))
+(setq sysver-keywords-constrained-random-gen
+      (list
+       "rand" "randc" "constraint" "solve" "soft" "before" "randsequence" "endsequence" "repeat"))
+(setq sysver-keywords-functional-coverage
+      (list
+       "covergroup" "endgroup" "option" "type_option" "sample" "coverpoint" "cross"))
+(setq sysver-keywords-system-utilities
+      (mapcar (lambda (karg) (concat "$" karg))
+              (list
+               "finish" "stop" "fatal" "error" "exit" "warning" "info" "realtime" "stime"
+               "asserton" "assertoff" "time" "assertkill" "assertcontrol" "assertpasson"
+               "assertpassoff" "assertfailon" "assertfailoff" "printtimescale" "timeformat"
+               "assertnonvacuouson" "assertvacuousoff" "bitstoreal" "realtobits" "sampled" "rose"
+               "bitstoshortreal" "shortrealtobits" "fell" "stable" "itor" "rtoi" "changed" "past"
+               "signed" "unsigned" "past_gclk" "rose_gclk" "cast" "fell_gclk" "stable_gclk"
+               "changed_gclk" "future_gclk" "rising_gclk" "falling_gclk" "bits" "isunbounded"
+               "steady_gclk" "changing_gclk" "typename" "coverage_control" "coverage_get_max"
+               "unpacked_dimensions" "dimensions" "coverage_get" "coverage_merge" "left" "right"
+               "coverage_save" "get_coverage" "low" "high" "set_coverage_db_name" "load_coverage_db"
+               "increment" "size" "random" "dist_chi_square" "clog2" "asin" "dist_erlang"
+               "dist_exponential" "ln" "acos" "dist_normal" "dist_poisson" "log10" "atan" "dist_t"
+               "dist_uniform" "exp" "atan2" "sqrt" "hypot" "pow" "sinh" "q_initialize" "q_add"
+               "floor" "cosh" "q_remove" "q_full" "ceil" "tanh" "q_exam" "sin" "asinh" "cos"
+               "acosh" "tan" "atanh" "async" "and" "array" "async" "and" "plane" "async" "nand"
+               "array" "async" "nand" "plane" "async" "or" "array" "async" "or" "plane"
+               "countbits" "countones" "async" "nor" "array" "async" "nor" "plane" "onehot"
+               "onehot0" "sync" "and" "array" "sync" "and" "plane" "isunknown" "sync" "nand"
+               "array" "sync" "nand" "plane" "sync" "or" "array" "sync" "or" "plane" "sync"
+               "nor" "array" "sync" "nor" "plane" "fatal" "error" "warning" "info" "system")))
+(setq sysver-keywords-system-io
+      (mapcar (lambda (karg) (concat "$" karg))
+              (list
+               "display" "displayb" "displayh" "displayo" "strobe" "strobeb" "strobeh" "strobeo"
+               "fdisplay" "fdisplayb" "fdisplayh" "fdisplayo" "fstrobe" "fstrobeb" "fstrobeh"
+               "fstrobeo" "swrite" "swriteb" "swriteh" "swriteo" "fscanf" "fread" "fseek"
+               "fflush" "feof" "write" "writeb" "writeh" "writeo" "monitor" "monitorb"
+               "monitorh" "monitoro" "monitoroff" "monitoron" "fopen" "fclose" "fwrite" "fwriteb"
+               "fwriteh" "fwriteo" "fmonitor" "fmonitorb" "fmonitorh" "fmonitoro" "sformat"
+               "sformatf" "fgetc" "ungetc" "fgets" "sscanf" "rewind" "ftell" "ferror"
+               "readmemb" "readmemh" "writememb" "writememh" "test" "plusargs" "value"
+               "plusargs" "dumpfile" "dumpoff" "dumpall" "dumpflush" "dumpportsoff"
+               "dumpportsall" "dumpportsflush" "dumpvars" "dumpon" "dumplimit" "dumpports"
+               "dumpportson" "dumpportslimit")))
 (setq sysver-keywords-compiler-directives
       (mapcar (lambda (karg) (concat "`" karg))
               (list
