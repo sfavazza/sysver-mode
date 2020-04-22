@@ -1,4 +1,4 @@
-;;; sysver-mode.el --- Emacs mode to handle Varilog/System-Verilog files -*- lexical-binding: t -*-
+;;; sysver.el --- Emacs mode to handle Varilog/System-Verilog files -*- lexical-binding: t -*-
 
 ;; Copyright (C) Samuele Favazza
 
@@ -89,7 +89,10 @@ This is useful to let the user customize it via the customization options"
       (modify-syntax-entry ?_ "_" table))
     (modify-syntax-entry ?` "w" table)
     ;; comments setup
-    ;; (modify-syntax-entry ? "" table) TODO
+    ;; (modify-syntax-entry ?/ "" table)
+
+    ;; TODO: string delimiters "string" <string> only for file inclusion, check the compiler
+    ;; directives snippet in the "highlighting_visual_test.sv" file
 
     ;; return the table object
     table))
@@ -264,8 +267,7 @@ This is useful to let the user customize it via the customization options"
           nil                            ; make the search case-sensitive
           ))
   ;; re-fontify current buffer as the defaults are directly changed
-  (font-lock-refresh-defaults)
-  )
+  (font-lock-refresh-defaults))
 
 (provide 'sysver-mode)
 ;; sysver.el ends here

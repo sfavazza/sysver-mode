@@ -13,7 +13,7 @@ the TEST-BODY is an unquoted list of statements to verify the tested feature."
   `(progn
      ;; reload sysver
      (unload-feature 'sysver-mode t)
-     (load-file "../sysver-mode.el")
+     (load-file "../sysver.el")
 
      ;; add the setup features to be tested
      ,@setup-to-test
