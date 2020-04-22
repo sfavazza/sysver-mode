@@ -90,3 +90,27 @@ assigned. The result is checked by evaluating the face-property change of the ta
               (should (equal
                        (get-text-property (point) 'face)
                        (pop exp-face)))))))))))
+
+(ert-deftest sysver-test-emphasize-block-statements ()
+  "test that the emphasize highlight for the block statements delimiters is effective.
+
+The face property of the `begin'/ `end' keywords are evaluated when emphasis is enabled or not."
+
+  (let ((test-string "  end begin ")
+        (options '(nil t))
+        (exp-faces '(font-lock-type-face font-lock-constant-face)))
+
+    (while options
+      (with-temp-buffer
+        (sysver-utc-environment
+
+         test-string
+
+         ;; feature to test
+         ((setq sysver-emphasize-block-statements (pop options)))
+
+         ;; test & verify
+         ((goto-char (point-max))
+          (backward-word)
+          (should (equal (get-text-property (point) 'face)
+                         (pop exp-faces)))))))))

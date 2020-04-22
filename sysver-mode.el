@@ -227,15 +227,23 @@ This is useful to let the user customize it via the customization options"
         `((
            ,(cons (regexp-opt (append
                                sysver-keywords-design-elements
-                               sysver-keywords-struct-procedures-waits) 'symbols)
+                               sysver-keywords-struct-procedures-waits
+                               sysver-keywords-procedural-programming-statements
+                               sysver-keywords-clocking
+                               sysver-keywords-assertions
+                               sysver-keywords-functional-coverage
+                               sysver-keywords-system-io) 'symbols)
                   font-lock-keyword-face)
 
            ,(cons (regexp-opt (append
-                               ) 'symbols)
+                               sysver-keywords-constrained-random-gen
+                               sysver-keywords-system-utilities) 'symbols)
                   font-lock-function-name-face)
 
            ,(cons (regexp-opt (append
-                               sysver-keywords-aggregate-data-types sysver-keywords-classes) 'symbols)
+                               sysver-keywords-aggregate-data-types
+                               sysver-keywords-classes
+                               sysver-keywords-assignments-statements) 'symbols)
                   font-lock-type-face)
            ;; operators dedicated highlighting (user option)
            ,(cons (concat "\\s-" (regexp-opt (append
@@ -250,9 +258,7 @@ This is useful to let the user customize it via the customization options"
                       font-lock-constant-face
                     font-lock-type-face))
 
-           ,(cons (regexp-opt (append
-                               )
-                              'symbols)
+           ,(cons (regexp-opt sysver-keywords-compiler-directives 'symbols)
                   font-lock-preprocessor-face))
           nil                            ; fontify also string and comments
           nil                            ; make the search case-sensitive
