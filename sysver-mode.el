@@ -222,8 +222,43 @@ This is useful to let the user customize it via the customization options"
 
   ;; define the code-highlighting
   ;; TODO
-  ;; (setq font-lock-defaults
-  ;;       ())
+  (setq font-lock-defaults
+        ;; keywords argument
+        `((
+           ,(cons (regexp-opt (append
+                               sysver-keywords-design-elements
+                               sysver-keywords-struct-procedures-waits) 'symbols)
+                  font-lock-keyword-face)
+
+           ,(cons (regexp-opt (append
+                               ) 'symbols)
+                  font-lock-function-name-face)
+
+           ,(cons (regexp-opt (append
+                               sysver-keywords-aggregate-data-types sysver-keywords-classes) 'symbols)
+                  font-lock-type-face)
+           ;; operators dedicated highlighting (user option)
+           ,(cons (concat "\\s-" (regexp-opt (append
+                                              sysver-keywords-operators)) "\\s-")
+                  (if sysver-emphasize-operators
+                      font-lock-constant-face
+                    nil))               ; maintain default face
+           ;; block delimiter highlighting (user option)
+           ,(cons (regexp-opt (append
+                               sysver-keywords-block-statements) 'symbols)
+                  (if sysver-emphasize-block-statements
+                      font-lock-constant-face
+                    font-lock-type-face))
+
+           ,(cons (regexp-opt (append
+                               )
+                              'symbols)
+                  font-lock-preprocessor-face))
+          nil                            ; fontify also string and comments
+          nil                            ; make the search case-sensitive
+          ))
+  ;; re-fontify current buffer as the defaults are directly changed
+  (font-lock-refresh-defaults)
   )
 
 (provide 'sysver-mode)
