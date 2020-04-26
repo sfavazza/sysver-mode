@@ -269,5 +269,5 @@ This is useful to let the user customize it via the customization options"
   ;; re-fontify current buffer as the defaults are directly changed
   (font-lock-refresh-defaults))
 
-(provide 'sysver-mode)
+(provide 'sysver)
 ;; sysver.el ends here

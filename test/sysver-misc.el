@@ -1,7 +1,7 @@
 ;;; sysver-misc.el --- test the miscellaneous options for sysver-mode
 
 (require 'ert)
-(require 'sysver-mode)
+(require 'sysver)
 
 (defmacro sysver-utc-environment (test-string setup-to-test test-body)
   "Freshly reload the `sysver' major mode and setup the environment for an unit-test-case (UTC).
@@ -12,7 +12,7 @@ the TEST-BODY is an unquoted list of statements to verify the tested feature."
 
   `(progn
      ;; reload sysver
-     (unload-feature 'sysver-mode t)
+     (unload-feature 'sysver t)
      (load-file "../sysver.el")
 
      ;; add the setup features to be tested
