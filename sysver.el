@@ -34,6 +34,8 @@
 
 ;;; Code:
 
+(require 'sysver-bnf)
+
 ;; =================================================================================================
 ;; user customization
 
@@ -82,17 +84,25 @@ character as part of a word. In `nil' the `_' character is considered as punctua
 This is useful to let the user customize it via the customization options"
   (let ((table (make-syntax-table)))
     ;; operators symbols
-    ;; (modify-syntax-entry ? "" table) TODO
+    (modify-syntax-entry ?\\ "\\" table)
+    (modify-syntax-entry ?+ "." table)
+    (modify-syntax-entry ?- "." table)
+    (modify-syntax-entry ?= "." table)
+    (modify-syntax-entry ?% "." table)
+    (modify-syntax-entry ?< "." table)
+    (modify-syntax-entry ?> "." table)
+    (modify-syntax-entry ?& "." table)
+    (modify-syntax-entry ?| "." table)
+    (modify-syntax-entry ?\' "." table)
     ;; word constituents
     (if sysver-underscore-is-word-constituent
         (modify-syntax-entry ?_ "w" table)
       (modify-syntax-entry ?_ "_" table))
-    (modify-syntax-entry ?` "w" table)
+    (modify-syntax-entry ?` "w" table)  ; part of a symbol definition
     ;; comments setup
-    ;; (modify-syntax-entry ?/ "" table)
-
-    ;; TODO: string delimiters "string" <string> only for file inclusion, check the compiler
-    ;; directives snippet in the "highlighting_visual_test.sv" file
+    (modify-syntax-entry ?/ ". 124" table)
+    (modify-syntax-entry ?* ". 23b" table)
+    (modify-syntax-entry ?\n ">" table)
 
     ;; return the table object
     table))
@@ -223,11 +233,17 @@ This is useful to let the user customize it via the customization options"
   (setq-local sysver-mode-syntax-table (sysver-define-syntax-table))
   (set-syntax-table sysver-mode-syntax-table)
 
+  ;; define the comment format details (newcomment library)
+  (setq-local comment-start "//")       ; it's complex to use the other comment style /* */
+  (setq-local comment-use-syntax t)     ; use the syntax table to look for comments
+
   ;; define the code-highlighting
-  ;; TODO
   (setq font-lock-defaults
         ;; keywords argument
         `((
+           ;; special handling for inclusion strings
+           ,(cons "`include\s+\\(<.+>\\)"
+                  '(1 font-lock-string-face t))
            ,(cons (regexp-opt (append
                                sysver-keywords-design-elements
                                sysver-keywords-struct-procedures-waits
@@ -267,7 +283,13 @@ This is useful to let the user customize it via the customization options"
           nil                            ; make the search case-sensitive
           ))
   ;; re-fontify current buffer as the defaults are directly changed
-  (font-lock-refresh-defaults))
+  (font-lock-refresh-defaults)
+
+  ;; set up indentation engine
+  (smie-setup sysver-smie-grammar #'sysver-smie-rules
+              :forward-token #'sysver-forward-token
+              :backward-token #'sysver-backward-token)
+  )
 
 (provide 'sysver)
 ;; sysver.el ends here

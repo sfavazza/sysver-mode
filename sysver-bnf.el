@@ -44,18 +44,25 @@
 ;; return "synthetic" tokens to ease the grammar definition.
 (defun sysver-forward-token ()
   "Return the next found token and move point to its end."
-  (smie-default-forward-token))
+  (let ((smie-token (smie-default-forward-token)))
+    (if (and (not (eobp))
+             (string= (buffer-substring-no-properties (1- (point)) (1+ (point)))
+                      "#("))
+        (progn
+          (goto-char (1+ (point)))
+          smie-syntoken-params-start-list) ; synthetic token
+      smie-token)))                        ; default token
 
 (defun sysver-backward-token ()
   "Return the previous token and move point to its beginning."
   (let ((smie-token (smie-default-backward-token)))
 
-    ;; TODO: something is not right, get error when looking for backward token
-
-    ;; The default token search function returns punctuation (syntax table class ".") symbols
-    ;; (syntax table class "w_"). Hence check for the test for the presence of "#(" string before
-    ;; point.
-    (if (string= (buffer-substring-no-properties (- (point) 2) (point)) "#(")
+    ;; The default token search function returns punctuation (syntax table class ".") and symbols
+    ;; (syntax table class "w_"). As such the "#(" token cannot be found, hence this function is
+    ;; made smarter to generate a synthetic token to indicate the presence of "#(".
+    (if (and (not (bobp))
+             (string= (buffer-substring-no-properties (- (point) 2) (point))
+                      "#("))
         (progn
           (goto-char (- (point) 2))
           smie-syntoken-params-start-list) ; synthetic token
@@ -89,7 +96,9 @@
 (setq smie-indent-basic 2)            ; big to be sure it has an effect
 (defun sysver-smie-rules (method arg)
 
+  ;; -----------------------------------------------------------------------------------------------
   ;; rule behavior explanation:
+  ;; -----------------------------------------------------------------------------------------------
   ;; "before": refers to the token on the current line and its own indentation
   ;; "after": refers to the previous line token and the indentation of the current line
   ;; "list-intro": rule used to indent a list of expression NOT interleaved by any token, usually
@@ -115,14 +124,6 @@
     ('(:before . ";") smie-indent-basic)
     ('(:before . "(") smie-indent-basic)
     (`(:before . ,smie-syntoken-params-start-list) smie-indent-basic)
-
-
-
-    
-    ;; ('(:before . ",") 2)
-    ;; ('(:before . "begin") 3)
-    ;; ('(:after . "(") 1)
-
     
     ))
 
