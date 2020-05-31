@@ -24,8 +24,7 @@
 ;;; Code:
 
 (require 'smie)
-
-
+(require 'sysver-options)
 
 ;; TODO: consider the following handy function:
 ;; Command: smie-close-block
@@ -35,16 +34,50 @@
 ;;     This command is like down-list but it also pays attention to nesting of tokens other than
 ;;     parentheses, such as begin...end.
 
+;; -------------------------------------------------------------------------------------------------
 ;; synthetic tokens
 (defvar smie-syntoken-params-start-list "PARAMS-START-LIST")
 
 ;; token search functions
-;; NOTE: the following are customized versions of SMIE token search functions optimized for
-;; sysver-mode. Through the token search, the indentation can overcome the BNF grammar limits and
+
+;; NOTE: normally when the default token search function returns `nil' or an `empty-string', SMIE
+;; tries to obtain the token using the local syntax-table. The following are customized versions of
+;; SMIE default token search functions optimized for sysver-mode.
+(defun sysver-basic-forward-token ()
+  "Forward search token function based on the syntax class."
+
+  ;; modify the default forward token function such that it returns a token even for
+  ;; parenthesis characters "(" ")"
+  (progn
+    (forward-comment (point-max))
+    (buffer-substring-no-properties
+     (point)
+     (progn (if (and (zerop (skip-syntax-forward "."))
+                     (zerop (skip-syntax-forward "("))
+                     (zerop (skip-syntax-forward ")")))
+                (skip-syntax-forward "w_'"))
+            (point)))))
+(defun sysver-basic-backward-token ()
+  "Backward search token function based on the syntax class."
+  (progn
+    (forward-comment (- (point)))
+    (buffer-substring-no-properties
+     (point)
+     (progn (if (and (zerop (skip-syntax-backward "."))
+                     (zerop (skip-syntax-backward "("))
+                     (zerop (skip-syntax-backward ")")))
+                (skip-syntax-backward "w_'"))
+            (point)))))
+
+;; Through the token search, the indentation can overcome the BNF grammar limits and
 ;; return "synthetic" tokens to ease the grammar definition.
 (defun sysver-forward-token ()
   "Return the next found token and move point to its end."
-  (let ((smie-token (smie-default-forward-token)))
+  (let ((smie-token (sysver-basic-forward-token)))
+
+    ;; As the default token search functions are syntax-table based they cannot find the "#(" token,
+    ;; hence they are made smarter to generate a synthetic token to indicate the presence of "#(".
+    ;; The same hold true for the `sysver-backward-token' function.
     (if (and (not (eobp))
              (string= (buffer-substring-no-properties (1- (point)) (1+ (point)))
                       "#("))
@@ -52,22 +85,18 @@
           (goto-char (1+ (point)))
           smie-syntoken-params-start-list) ; synthetic token
       smie-token)))                        ; default token
-
 (defun sysver-backward-token ()
   "Return the previous token and move point to its beginning."
-  (let ((smie-token (smie-default-backward-token)))
+  (let ((smie-token (sysver-basic-backward-token)))
 
-    ;; The default token search function returns punctuation (syntax table class ".") and symbols
-    ;; (syntax table class "w_"). As such the "#(" token cannot be found, hence this function is
-    ;; made smarter to generate a synthetic token to indicate the presence of "#(".
+    ;; check the comment description of `sysver-forward-token' for more details.
     (if (and (not (bobp))
              (string= (buffer-substring-no-properties (- (point) 2) (point))
                       "#("))
         (progn
           (goto-char (- (point) 2))
           smie-syntoken-params-start-list) ; synthetic token
-      smie-token)                       ; default token
-    ))
+      smie-token)))                        ; default token
 
 ;; grammar definition
 (defconst sysver-smie-grammar  
@@ -78,8 +107,6 @@
       ;; module description
       (mod_descr ("module" mod_body "endmodule"))
       (mod_body (id ";" id))
-      ;; (mod_body (id "#(" params ")")
-      ;;           (id "(" params ")"))
       (params_list ("(" params ")")
                    (,smie-syntoken-params-start-list params ")"))
       (params (params "," params)
@@ -93,8 +120,8 @@
   "Define a grammar for the language to be given to SMIE")
 
 ;; indentation rules
-(setq smie-indent-basic 2)            ; big to be sure it has an effect
-(defun sysver-smie-rules (method arg)
+(setq smie-indent-basic sysver-default-indent)            ; big to be sure it has an effect
+(defun sysver-smie-rules (kind token)
 
   ;; -----------------------------------------------------------------------------------------------
   ;; rule behavior explanation:
@@ -110,21 +137,51 @@
   ;;                 d
   ;;                 )
   
-  ;; the following sequence of rules are always run in sequence until the first one returning non-nil
-  (pcase (cons method arg)
+  ;; the following sequence of rules are always run in sequence until the first one returns non-nil
+  (cond
+   ;; default rules
+   ;; ('(:elem . args)  smie-indent-basic)
+   ;; ('(:elem . basic) smie-indent-basic)
+   ((and (eq kind :elem) (equal token 'empty-line-token))
+    0)
 
-    ;; default
-    ('(:elem . args)  smie-indent-basic)
-    ;; ('(:elem . basic) smie-indent-basic)
-    ('(:elem . empty-line-token) 0)
+   ;; ----------------------------------------------------------------------------------------------
+   ;; module structure
+   ((and (eq kind :before) (member token `("(" ,smie-syntoken-params-start-list)))
+    smie-indent-basic)
+   ((and (eq kind :before) (equal token ","))
+    ;; align to the end of "#(" and "(" start-list-delimiters
+    (save-excursion
+      ;; nil if not inside a list, t otherwise
+      (if (condition-case nil
+              ;; return true if point is inside a parameters-list
+              (progn (backward-up-list) t)
+            (scan-error nil))
+          (cond
+           ((member (sysver-forward-token) `(,smie-syntoken-params-start-list "("))
+            `(column . ,(current-column)))
+           ;; ((equal (sysver-forward-token) "(")
+           ;;  1)
+           ;; keep the default indentation otherwise
+           (t nil)))))
+   ((and (eq kind :after) (member token `(,smie-syntoken-params-start-list "(")))
+    (save-excursion
+      (sysver-forward-token)
+      `(column . ,(current-column))))
+   ((and (eq kind :before) (equal token "endmodule"))
+    0)
 
-    ;; ('(:list-intro . "module") t)
-    ('(:after . "module") smie-indent-basic)
-    ('(:before . "endmodule") 0)
-    ('(:before . ";") smie-indent-basic)
-    ('(:before . "(") smie-indent-basic)
-    (`(:before . ,smie-syntoken-params-start-list) smie-indent-basic)
-    
-    ))
+   ;; begin-end blocks
+
+   ;; loops (for, while)
+
+   ;; case
+   )
+
+  ;; (pcase (cons method arg)
+  ;;   ('(:before . "endmodule") 0)
+  ;;   ('(:before . ";") smie-indent-basic)
+  ;;   )
+  )
 
 (provide 'sysver-bnf)

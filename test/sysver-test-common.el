@@ -17,7 +17,7 @@ the TEST-BODY is an unquoted list of statements to verify the tested feature."
 
      ;; enable sysver
      (sysver-mode)
-     (insert test-string)
+     (insert ,test-string)
      (goto-char (point-min))
      (font-lock-fontify-buffer)
 

@@ -34,41 +34,8 @@
 
 ;;; Code:
 
+(require 'sysver-options)
 (require 'sysver-bnf)
-
-;; =================================================================================================
-;; user customization
-
-;; -------------------------------------------------------------------------------------------------
-;; groups
-(defgroup sysver nil
-  "System-Verilog mode customization."
-  :group 'languages)
-
-(defgroup sysver-misc nil
-  "System-Verilog mode miscellaneous options."
-  :group 'sysver)
-(defgroup sysver-indentation nil
-  "System-Verilog mode indentation options."
-  :group 'sysver)
-
-;; -------------------------------------------------------------------------------------------------
-;; options
-(defcustom sysver-underscore-is-word-constituent t
-  "If `non-nil' (default) the `forward-word' and `backward-word' commands will consider the `_'
-character as part of a word. In `nil' the `_' character is considered as punctuation"
-  :type 'boolean
-  :group 'sysver-misc)
-
-(defcustom sysver-emphasize-operators nil
-  "If `non-nil' highlight all operators for an improved visibility."
-  :type 'booleanxs
-  :group 'sysver-misc)
-
-(defcustom sysver-emphasize-block-statements nil
-  "if `non-nil' highlight the `begin'-`end' block delimiters for an improved visibility."
-  :type 'boolean
-  :group 'sysver-misc)
 
 ;; =================================================================================================
 ;; navigation functions
