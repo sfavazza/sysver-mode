@@ -120,7 +120,6 @@
   "Define a grammar for the language to be given to SMIE")
 
 ;; indentation rules
-(setq smie-indent-basic sysver-default-indent)            ; big to be sure it has an effect
 (defun sysver-smie-rules (kind token)
 
   ;; -----------------------------------------------------------------------------------------------
@@ -140,15 +139,15 @@
   ;; the following sequence of rules are always run in sequence until the first one returns non-nil
   (cond
    ;; default rules
-   ;; ('(:elem . args)  smie-indent-basic)
-   ;; ('(:elem . basic) smie-indent-basic)
+   ;; ('(:elem . args)  sysver-default-indent)
+   ;; ('(:elem . basic) sysver-default-indent)
    ((and (eq kind :elem) (equal token 'empty-line-token))
     0)
 
    ;; ----------------------------------------------------------------------------------------------
    ;; module structure
    ((and (eq kind :before) (member token `("(" ,smie-syntoken-params-start-list)))
-    smie-indent-basic)
+    sysver-default-indent)
    ((and (eq kind :before) (equal token ","))
     ;; align to the end of "#(" and "(" start-list-delimiters
     (save-excursion
@@ -176,11 +175,15 @@
    ;; loops (for, while)
 
    ;; case
+
+   ;; as all these rules are applied in order and the function exits as the first returns non-nil,
+   ;; here the default option is placed
+   ;; (t sysver-default-indent)
    )
 
   ;; (pcase (cons method arg)
   ;;   ('(:before . "endmodule") 0)
-  ;;   ('(:before . ";") smie-indent-basic)
+  ;;   ('(:before . ";") sysver-default-indent)
   ;;   )
   )
 

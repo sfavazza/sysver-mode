@@ -16,7 +16,10 @@
                                  (make-string indent-test ?\ ) "(param3, param4, param5)\n"
                                  "endmodule")
                         ,(concat "module a_module_name_id1 #(param0,\n"
-                                 (make-string (+ indent-test 2) ?\ ) "param1, param2)\n"
+                                 ;; The list of parameters after the first one in the previous line
+                                 ;; is indented to the parameter-list starting column.
+                                 (make-string (+ (length "module a_module_name_id0 ") 2) ?\ )
+                                 "param1, param2)\n" 
                                  (make-string indent-test ?\ ) "(param3, param4, param5)\n"
                                  "endmodule")
                         ,(concat "module a_module_name_id2\n"
@@ -43,7 +46,6 @@
           (setq current-string (pop strings))
           (with-temp-buffer
             (sysver-utc-environment
-
              current-string
 
              ;; set-up indentation parameters
@@ -53,4 +55,5 @@
              ((save-excursion
                 (indent-region (point-min) (point-max)))
               ;; verify
-              (should (equal (buffer-string) current-string))))))))))
+              (should (equal (buffer-substring-no-properties (point-min) (point-max))
+                             current-string))))))))))

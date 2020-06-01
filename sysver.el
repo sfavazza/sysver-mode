@@ -252,7 +252,8 @@ This is useful to let the user customize it via the customization options"
   ;; re-fontify current buffer as the defaults are directly changed
   (font-lock-refresh-defaults)
 
-  ;; set up indentation engine
+  ;; set up the indentation engine SMIE
+  (setq smie-indent-basic sysver-default-indent)
   (smie-setup sysver-smie-grammar #'sysver-smie-rules
               :forward-token #'sysver-forward-token
               :backward-token #'sysver-backward-token)

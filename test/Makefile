@@ -23,4 +23,4 @@ test_files := $(wildcard *.el)
 all: $(test_files)
 
 $(test_files):
-	emacs -batch -l ../sysver.el -l ert -l $@ -f ert-run-tests-batch-and-exit
+	emacs -batch -L ../ -L . -l ert -l $@ -f ert-run-tests-batch-and-exit
