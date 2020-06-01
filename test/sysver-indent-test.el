@@ -2,7 +2,7 @@
 
 (require 'ert)
 (require 'sysver)
-(require 'sysver-test-common)
+(require 'sysver-common)
 
 (ert-deftest sysver-test-module-header-indent ()
   "Test indentation of the module header constructs with general params."

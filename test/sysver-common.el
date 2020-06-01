@@ -23,4 +23,4 @@ the TEST-BODY is an unquoted list of statements to verify the tested feature."
 
      ,@test-body))
 
-(provide 'sysver-test-common)
+(provide 'sysver-common)

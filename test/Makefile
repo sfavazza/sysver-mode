@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-test_files := $(wildcard *.el)
+test_files := $(wildcard *-test.el)
 
 .PHONY: all $(test_files)
 
