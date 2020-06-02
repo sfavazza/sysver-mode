@@ -98,15 +98,91 @@
           smie-syntoken-params-start-list) ; synthetic token
       smie-token)))                        ; default token
 
+;; -------------------------------------------------------------------------------------------------
 ;; grammar definition
+
+;; resolvers: they aim at solving operator conflicts. Every time the engine finds a sequence of
+;; tokens with similar behavior (like separators) a resolver shall make the precedence unambiguous.
+;; The conflicts warnings are reported by the `smie-set-prec2tab' function which 
+(setq sysver-resolver-assignments
+      (mapcar (lambda (x) `(assoc ,x))
+              '("=" "+=" "-=" "*=" "/=" "%=" "&=" "|=" "^=" "<<=" ">>=" "<<<=" ">>>=")))
+(setq sysver-resolver-operators
+      (mapcar (lambda (x) `(assoc ,x))
+              '("?" "+" "-" "!" "~" "&" "~&" "|" "~|" "^" "~^" "^~"
+                "*" "/" "%" "==" "!=" "===" "!==" "==?" "!=?" "&&" "||" "**"
+                "<" "<=" ">" ">=" ">>>" "<<<"
+                "->" "<->" "##"
+                ">>" "<<"
+                "++" "--")))
+
+;; grammar
 (defconst sysver-smie-grammar  
   (smie-prec2->grammar
    (smie-bnf->prec2
     ;; BNF: list of nonterminal definitions with the form (NONTERM RHS1 RHS2 ...)
     `((id)                                 ; any identifier
       ;; module description
-      (mod_descr ("module" mod_body "endmodule"))
-      (mod_body (id ";" id))
+      (mod_descr ("module" statements "endmodule"))
+      ;; (mod_body (id ";" id))
+      ;; expressions
+      (assignment ("assign" statements)
+                  (statements))
+      (statements (statement ";" statement))
+      (statement (id "=" exprs)
+                 (id "<=" exprs)
+                 (id "+=" exprs)
+                 (id "-=" exprs)
+                 (id "*=" exprs)
+                 (id "/=" exprs)
+                 (id "%=" exprs)
+                 (id "&=" exprs)
+                 (id "|=" exprs)
+                 (id "^=" exprs)
+                 (id "<<=" exprs)
+                 (id ">>=" exprs)
+                 (id "<<<=" exprs)
+                 (id ">>>=" exprs))
+      (exprs (exprs "?" exprs)
+             (exprs "+" exprs)
+             (exprs "-" exprs)
+             (exprs "!" exprs)
+             (exprs "~" exprs)
+             (exprs "&" exprs)
+             (exprs "~&" exprs)
+             (exprs "|" exprs)
+             (exprs "~|" exprs)
+             (exprs "^" exprs)
+             (exprs "~^" exprs)
+             (exprs "^~" exprs)
+             (exprs "*" exprs)
+             (exprs "/" exprs)
+             (exprs "%" exprs)
+             (exprs "==" exprs)
+             (exprs "!=" exprs)
+             (exprs "===" exprs)
+             (exprs "!==" exprs)
+             (exprs "==?" exprs)
+             (exprs "!=?" exprs)
+             (exprs "&&" exprs)
+             (exprs "||" exprs)
+             (exprs "**" exprs)
+             (exprs "<" exprs)
+             (exprs "<=" exprs)
+             (exprs ">" exprs)
+             (exprs ">=" exprs)
+             (exprs ">>>" exprs)
+             (exprs "<<<" exprs)
+             (exprs "->" exprs)
+             (exprs "<->" exprs)
+             (exprs "##" exprs)
+             (exprs ">>" exprs)
+             (exprs "<<" exprs)
+             (exprs "++" exprs)
+             (exprs "--" exprs)
+             (params_list)              ; list of parameters
+             (id))
+      ;; parameter lists
       (params_list ("(" params ")")
                    (,smie-syntoken-params-start-list params ")"))
       (params (params "," params)
@@ -116,6 +192,9 @@
     ;; share the same precedence. The precs are sorted by precedence, the first below has the
     ;; highest precedence.
     '((assoc ","))
+    sysver-resolver-assignments
+    sysver-resolver-operators
+    '((assoc ";"))
     ))
   "Define a grammar for the language to be given to SMIE")
 

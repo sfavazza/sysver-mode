@@ -107,6 +107,10 @@ This is useful to let the user customize it via the customization options"
        "default"                        ; patterns
        "alias"                          ; aliasing
        "null"))
+(setq sysver-keywords-ports
+      (list
+       "inout" "input" "output" "ref" "var"
+       "logic" "wire" "reg"))
 (setq sysver-keywords-operators
       (list
        "=" "+=" "-=" "*=" "/=" "%=" "&=" "|=" "^=" "<<=" ">>=" "<<<=" ">>>=" ; assignment
@@ -229,7 +233,8 @@ This is useful to let the user customize it via the customization options"
            ,(cons (regexp-opt (append
                                sysver-keywords-aggregate-data-types
                                sysver-keywords-classes
-                               sysver-keywords-assignments-statements) 'symbols)
+                               sysver-keywords-assignments-statements
+                               sysver-keywords-ports) 'symbols)
                   font-lock-type-face)
            ;; operators dedicated highlighting (user option)
            ,(cons (concat "\\s-" (regexp-opt (append
