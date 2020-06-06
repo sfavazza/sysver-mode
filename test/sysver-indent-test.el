@@ -5,7 +5,7 @@
 (require 'sysver-common)
 
 (ert-deftest sysver-test-module-header-indent ()
-  "Test indentation of the module header constructs with general params."
+  "Test the indentation of the module header constructs with general params."
 
   (let ((options '(3 4 2)))
 
@@ -55,5 +55,4 @@
              ((save-excursion
                 (indent-region (point-min) (point-max)))
               ;; verify
-              (should (equal (buffer-substring-no-properties (point-min) (point-max))
-                             current-string))))))))))
+              (str-compare-test current-string)))))))))

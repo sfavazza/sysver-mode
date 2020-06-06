@@ -23,4 +23,9 @@ the TEST-BODY is an unquoted list of statements to verify the tested feature."
 
      ,@test-body))
 
+(defun str-compare-test (test-string)
+  "Compare the given TEST-STRING string against the current buffer content."
+  (should (equal (buffer-substring-no-properties (point-min) (point-max))
+                 test-string)))
+
 (provide 'sysver-common)
