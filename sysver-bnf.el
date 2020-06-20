@@ -36,38 +36,60 @@
 
 ;; -------------------------------------------------------------------------------------------------
 ;; synthetic tokens
-(defvar smie-syntoken-params-start-list "PARAMS-START-LIST")
+(defvar SYNTOK-PARAMS-START-LIST "SYNTOK-PARAMS-START-LIST")
+(defvar SYNTOK-ASSIGN-SEMICOLON-CLOSER "SYNTOK-ASSIGN-SEMICOLON-CLOSER")
+(defvar SYNTOK-SPACING "SYNTOK-SPACING")
 
 ;; token search functions
 
 ;; NOTE: normally when the default token search function returns `nil' or an `empty-string', SMIE
-;; tries to obtain the token using the local syntax-table. The following are customized versions of
-;; SMIE default token search functions optimized for sysver-mode.
+;; tries to obtain the token using the local syntax-table. Because the System-Verilog / Verilog
+;; grammar is not BNF-friendly (it contains consecutive non-terminal), the token search functions
+;; should also consider the comments and/or spaces between any two tokens (either terminal or
+;; non-terminal) as synthetic-token candidates. The following are customized versions of SMIE
+;; default token search functions optimized for sysver-mode.
 (defun sysver-basic-forward-token ()
-  "Forward search token function based on the syntax class."
+  "Default forward search token function based on the syntax classes."
 
   ;; modify the default forward token function such that it returns a token even for
   ;; parenthesis characters "(" ")"
   (progn
-    (forward-comment (point-max))
-    (buffer-substring-no-properties
-     (point)
-     (progn (if (and (zerop (skip-syntax-forward "."))
-                     (zerop (skip-syntax-forward "("))
-                     (zerop (skip-syntax-forward ")")))
-                (skip-syntax-forward "w_'"))
-            (point)))))
+    (let ((start-pnt (point)))
+      ;; return the whole string as a token
+      ;; when inside a comment the `forward-comment' returns always `nil', moreover the strings
+      ;; shall be given  or a string the 
+      (forward-comment (point-max))
+
+      (if (> (point) start-pnt)
+          ;; we just skipped a space-comments group, hence the general inter-token is returned, the
+          ;; caller of this function will refine the search
+          SYNTOK-SPACING
+        (buffer-substring-no-properties
+         (point)
+         (cond
+          ((and (zerop (skip-syntax-forward "."))
+                (zerop (skip-syntax-forward "("))
+                (zerop (skip-syntax-forward ")")))))
+         (progn (if 
+                    (skip-syntax-forward "w_'"))
+                (point)))))))
 (defun sysver-basic-backward-token ()
-  "Backward search token function based on the syntax class."
+  "Default backward search token function based on the syntax classes."
+
+  ;; NOTE: all explanations and comments are the same as for the `sysver-basic-forward-token'
   (progn
-    (forward-comment (- (point)))
-    (buffer-substring-no-properties
-     (point)
-     (progn (if (and (zerop (skip-syntax-backward "."))
-                     (zerop (skip-syntax-backward "("))
-                     (zerop (skip-syntax-backward ")")))
-                (skip-syntax-backward "w_'"))
-            (point)))))
+    (let ((start-pnt (point)))
+      (forward-comment (- (point)))
+
+      (if (< (point) start-pnt)
+          SYNTOK-SPACING
+        (buffer-substring-no-properties
+         (point)
+         (progn (if (and (zerop (skip-syntax-backward "."))
+                         (zerop (skip-syntax-backward "("))
+                         (zerop (skip-syntax-backward ")")))
+                    (skip-syntax-backward "w_'"))
+                (point)))))))
 
 ;; Through the token search, the indentation can overcome the BNF grammar limits and
 ;; return "synthetic" tokens to ease the grammar definition.

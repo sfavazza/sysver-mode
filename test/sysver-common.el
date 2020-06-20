@@ -28,4 +28,7 @@ the TEST-BODY is an unquoted list of statements to verify the tested feature."
   (should (equal (buffer-substring-no-properties (point-min) (point-max))
                  test-string)))
 
+(defun info-msg (format-string &rest args)
+  (message (concat "INFO: " format-string) args))
+
 (provide 'sysver-common)
