@@ -108,3 +108,47 @@
           (goto-char (/ (buffer-size) 2))
           (should (equal (search-func) SYNTOK-SPACING))
           (should (buf-limit-p))))))))
+
+(ert-deftest sysver-test-gen-syntok-string ()
+  "Test the behavior of the basic token search functions, when:
+
+- right before a string delimiter
+- in the middle of a string
+- right after a string delimiter"
+
+  (let ((tok-search-functions '(sysver-basic-forward-token
+                                sysver-basic-backward-token))
+        search-func)
+
+    (while tok-search-functions
+
+      ;; pop test symbols
+      (fset 'search-func (pop tok-search-functions))
+
+      (with-temp-buffer
+        (sysver-utc-environment
+         ;; test string
+         " \"a long string object to generate a single token\" "
+
+         ;; no parameters to be tested
+         ()
+
+         ;; verify steps
+         (
+          ;; before a string
+          (when (eq #'sysver-basic-forward-token (symbol-function 'search-func))
+            (info-msg "testing the `%s' function before a string delimiter" (symbol-function 'search-func))
+            (skip-syntax-forward " ")
+            (should (equal (search-func) SYNTOK-STRING)))
+
+          ;; in the middle of a string
+          (info-msg "testing the `%s' function in the middle of a string" (symbol-function 'search-func))
+          (goto-char (/ (buffer-size) 2))
+          (should (equal (search-func) SYNTOK-STRING))
+
+          ;; after a string
+          (when (eq #'sysver-basic-backward-token (symbol-function 'search-func))
+            (goto-char (point-max))
+            (skip-syntax-backward " ")
+            (should (equal (search-func) SYNTOK-STRING)))
+          ))))))
