@@ -61,7 +61,7 @@
            (syntax-state-next (if (not (eobp))
                                   (save-excursion
                                     (syntax-ppss (1+ start-pnt)))
-                                (syntax-class)))) ; it is expected a list so recycle the previous one
+                                syntax-state))) ; it is expected a list so recycle the previous one
 
       (cond
        ;; the token search must stop when reaching the end of the buffer
@@ -71,7 +71,7 @@
        ;; state to skip it
        ((nth 4 syntax-state)
         (goto-char (nth 8 syntax-state)) ; to the comment start to easily skip it
-        ;; move forward skipping comments and with characters
+        ;; move forward skipping comments and space characters
         (forward-comment (point-max))
         SYNTOK-SPACING)
 
@@ -93,8 +93,8 @@
         (forward-comment (point-max))
 
         (if (> (point) start-pnt)
-            ;; we just skipped a space-comments group, hence the general inter-token is returned, the
-            ;; caller of this function will refine the search
+            ;; we just skipped a space-comments group, hence the spacing-token is returned, the caller of this
+            ;; function will refine the search
             SYNTOK-SPACING
           (buffer-substring-no-properties
            (point)
@@ -104,25 +104,58 @@
                   (zerop (skip-syntax-forward ")")))
              (skip-syntax-forward "w_'")
              (point))
-            (t (point)))
-           )))))))
+            (t (point))))))))))
 (defun sysver-basic-backward-token ()
   "Default backward search token function based on the syntax classes."
 
   ;; NOTE: all explanations and comments are the same as for the `sysver-basic-forward-token'
   (progn
-    (let ((start-pnt (point)))
-      (forward-comment (- (point)))
+    (let* ((start-pnt (point))
+           (syntax-state (syntax-ppss start-pnt))
+           (syntax-state-prev (if (not (bobp))
+                                  (save-excursion
+                                    (syntax-ppss (1- start-pnt)))
+                                syntax-state)))
 
-      (if (< (point) start-pnt)
-          SYNTOK-SPACING
-        (buffer-substring-no-properties
-         (point)
-         (progn (if (and (zerop (skip-syntax-backward "."))
-                         (zerop (skip-syntax-backward "("))
-                         (zerop (skip-syntax-backward ")")))
-                    (skip-syntax-backward "w_'"))
-                (point)))))))
+      (cond
+       ;; the token search must stop when reaching the start of the buffer
+       ((bobp) nil)
+
+       ;; inside a comment
+       ((nth 4 syntax-state)
+        ;; move to the comment beginning as "forward-comment" does not work from inside it
+        (goto-char (nth 8 syntax-state))
+        ;; move backward skipping comments and space characters
+        (forward-comment (- (point)))
+        SYNTOK-SPACING)
+
+       ;; FIXME: the string case fails to leave a string context when the current string contains
+       ;; the escaped apexes.
+
+       ;; When inside of a string or just before a string opener character, a string-token shall be
+       ;; returned.
+       ((or (nth 3 syntax-state) (nth 3 syntax-state-prev))
+        ;; skip all the characters inside the string (^ negate the class to be skipped)
+        (skip-syntax-backward "\"")      ; move inside the string when placed just before its opener
+        (skip-syntax-backward "^\"")     ; reach the string closer
+        (skip-syntax-backward "\"")      ; move after the string closer
+        SYNTOK-STRING)
+
+       ;; elsewhere
+       (t
+        (forward-comment (- (point)))
+
+        (if (< (point) start-pnt)
+            SYNTOK-SPACING
+          (buffer-substring-no-properties
+           (point)
+           (cond
+            ((and (zerop (skip-syntax-backward "."))
+                  (zerop (skip-syntax-backward "("))
+                  (zerop (skip-syntax-backward ")")))
+             (skip-syntax-backward "w_'")
+             (point))
+            (t (point))))))))))
 
 ;; Through the token search, the indentation can overcome the BNF grammar limits and
 ;; return "synthetic" tokens to ease the grammar definition.

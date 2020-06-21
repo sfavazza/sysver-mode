@@ -68,3 +68,43 @@
           (dolist (exp-tok exp-tokens-reverse)
             (message "token: %s" exp-tok))
           (should (equal (sysver-basic-backward-token) (pop exp-tokens-reverse)))))))))
+
+(ert-deftest sysver-test-gen-syntok-space ()
+  "Test the behavior of the basic token search functions, when:
+
+- right before a comment delimiter
+- in the middle of a comment"
+
+  (let ((tok-search-functions '(sysver-basic-forward-token
+                                sysver-basic-backward-token))
+        (buffer-extremes-list '(eobp bobp))
+        search-func
+        buf-limit-p)
+
+    (while tok-search-functions
+
+      ;; pop test symbols
+      (fset 'search-func (pop tok-search-functions))
+      (fset 'buf-limit-p (pop buffer-extremes-list))
+
+      (with-temp-buffer
+        (sysver-utc-environment
+         ;; test string
+         "   // a long comment with fancy ch@ract3rs  "
+
+         ;; no parameters to be tested
+         ()
+
+         ;; verify steps
+         (
+          ;; before a comment
+          (info-msg "testing the `%s' function before a comment delimiter" (symbol-function 'search-func))
+          (skip-syntax-forward " ")
+          (should (equal (search-func) SYNTOK-SPACING))
+          (should (buf-limit-p))
+
+          ;; in the middle of a comment
+          (info-msg "testing the `%s' function in the middle of a comment" (symbol-function 'search-func))
+          (goto-char (/ (buffer-size) 2))
+          (should (equal (search-func) SYNTOK-SPACING))
+          (should (buf-limit-p))))))))
