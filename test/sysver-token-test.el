@@ -3,6 +3,7 @@
 (require 'ert)
 (require 'sysver)
 (require 'sysver-common)
+(require 'cl-lib)
 
 (ert-deftest sysver-test-default-token-search ()
   "Test the default token search behavior"
@@ -18,12 +19,16 @@
                         "// a commment to test the synthetic-token generation"))
 
          ;; list of all expected tokens: the REAL-TOKENS list interleaved with SYNTOK-SPACING tokens
-         (exp-tokens (let (full-tok-list '())
+         (exp-tokens (let ((full-tok-list '()))
+                       ;; interleave the expected tokens list with SYNTOK-SPACING
                        (dolist (token real-tokens full-tok-list)
                          (setq full-tok-list (append full-tok-list `(,token ,SYNTOK-SPACING))))
-                       ;; Refine the output list as the last comment shall be matched together with the previous
-                       ;; space character (hence the obtained list less the last tokens).
-                       (setq full-tok-list (butlast full-tok-list 2))))
+                       ;; Refine the output list:
+                       ;; - the string shall be returned as a SYNTOK-STRING token
+                       ;; - the last comment shall be part of the previous space, hence remove the last 2 tokens
+                       (setq full-tok-list (append (cl-subseq full-tok-list 0 4)
+                                                   `(,SYNTOK-STRING)
+                                                   (cl-subseq full-tok-list 5 (- (length full-tok-list) 2))))))
 
          ;; turn the REAL-TOKENS list into a space-interleaved-list
          (current-string (mapconcat 'identity real-tokens " "))

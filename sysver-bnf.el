@@ -39,6 +39,7 @@
 (defvar SYNTOK-PARAMS-START-LIST "SYNTOK-PARAMS-START-LIST")
 (defvar SYNTOK-ASSIGN-SEMICOLON-CLOSER "SYNTOK-ASSIGN-SEMICOLON-CLOSER")
 (defvar SYNTOK-SPACING "SYNTOK-SPACING")
+(defvar SYNTOK-STRING "SYNTOK-STRING")
 
 ;; token search functions
 
@@ -54,25 +55,57 @@
   ;; modify the default forward token function such that it returns a token even for
   ;; parenthesis characters "(" ")"
   (progn
-    (let ((start-pnt (point)))
-      ;; return the whole string as a token
-      ;; when inside a comment the `forward-comment' returns always `nil', moreover the strings
-      ;; shall be given  or a string the 
-      (forward-comment (point-max))
+    (let* ((start-pnt (point))
+           (syntax-state (syntax-ppss start-pnt))
+           ;; do not try to get the state of the incremented point when at the end of the buffer
+           (syntax-state-next (if (not (eobp))
+                                  (save-excursion
+                                    (syntax-ppss (1+ start-pnt)))
+                                (syntax-class)))) ; it is expected a list so recycle the previous one
 
-      (if (> (point) start-pnt)
-          ;; we just skipped a space-comments group, hence the general inter-token is returned, the
-          ;; caller of this function will refine the search
-          SYNTOK-SPACING
-        (buffer-substring-no-properties
-         (point)
-         (cond
-          ((and (zerop (skip-syntax-forward "."))
-                (zerop (skip-syntax-forward "("))
-                (zerop (skip-syntax-forward ")")))))
-         (progn (if 
-                    (skip-syntax-forward "w_'"))
-                (point)))))))
+      (cond
+       ;; the token search must stop when reaching the end of the buffer
+       ((eobp) nil)
+
+       ;; when inside a comment the `forward-comment' returns always `nil', hence use the syntax
+       ;; state to skip it
+       ((nth 4 syntax-state)
+        (goto-char (nth 8 syntax-state)) ; to the comment start to easily skip it
+        ;; move forward skipping comments and with characters
+        (forward-comment (point-max))
+        SYNTOK-SPACING)
+
+       ;; FIXME: the string case fails to leave a string context when the current string contains
+       ;; the escaped apexes.
+
+       ;; When inside of a string or just before a string opener character, a string-token shall be
+       ;; returned.
+       ((or (nth 3 syntax-state) (nth 3 syntax-state-next))
+        ;; skip all the characters inside the string (^ negate the class to be skipped)
+        (skip-syntax-forward "\"")      ; move inside the string when placed just before its opener
+        (skip-syntax-forward "^\"")     ; reach the string closer
+        (skip-syntax-forward "\"")      ; move after the string closer
+        SYNTOK-STRING)
+
+       ;; as not inside a comment or string search the next token based on the syntax class (after
+       ;; skipping comments and white spaces)
+       (t
+        (forward-comment (point-max))
+
+        (if (> (point) start-pnt)
+            ;; we just skipped a space-comments group, hence the general inter-token is returned, the
+            ;; caller of this function will refine the search
+            SYNTOK-SPACING
+          (buffer-substring-no-properties
+           (point)
+           (cond
+            ((and (zerop (skip-syntax-forward "."))
+                  (zerop (skip-syntax-forward "("))
+                  (zerop (skip-syntax-forward ")")))
+             (skip-syntax-forward "w_'")
+             (point))
+            (t (point)))
+           )))))))
 (defun sysver-basic-backward-token ()
   "Default backward search token function based on the syntax classes."
 
